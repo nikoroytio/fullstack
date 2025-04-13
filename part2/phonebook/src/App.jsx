@@ -3,12 +3,14 @@ import personService from './services/persons'
 import Filter from './components/Filter'
 import PersonForm from './components/PersonForm'
 import Persons from './components/Persons'
+import Notification from './components/Notification'
 
 const App = () => {
   const [persons, setPersons] = useState([])
   const [newName, setNewName] = useState('')
   const [newNumber, setNewNumber] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
+  const [notification, setNotification] = useState({ message: null, type: null })
 
   useEffect(() => {
     personService
@@ -17,6 +19,13 @@ const App = () => {
         setPersons(initialPersons)
       })
   }, [])
+
+  const showNotification = (message, type) => {
+    setNotification({ message, type })
+    setTimeout(() => {
+      setNotification({ message: null, type: null })
+    }, 5000)
+  }
 
   const handleSubmit = (event) => {
     event.preventDefault()
@@ -32,8 +41,16 @@ const App = () => {
             setPersons(persons.map(person => 
               person.id === existingPerson.id ? returnedPerson : person
             ))
+            showNotification(`Updated ${returnedPerson.name}`, 'success')
             setNewName('')
             setNewNumber('')
+          })
+          .catch(error => {
+            showNotification(
+              `Information of ${existingPerson.name} has already been removed from server`,
+              'error'
+            )
+            setPersons(persons.filter(p => p.id !== existingPerson.id))
           })
       }
     } else {
@@ -46,6 +63,7 @@ const App = () => {
         .create(personObject)
         .then(returnedPerson => {
           setPersons(persons.concat(returnedPerson))
+          showNotification(`Added ${returnedPerson.name}`, 'success')
           setNewName('')
           setNewNumber('')
         })
@@ -71,6 +89,14 @@ const App = () => {
         .remove(id)
         .then(() => {
           setPersons(persons.filter(p => p.id !== id))
+          showNotification(`Deleted ${person.name}`, 'success')
+        })
+        .catch(error => {
+          showNotification(
+            `Information of ${person.name} has already been removed from server`,
+            'error'
+          )
+          setPersons(persons.filter(p => p.id !== id))
         })
     }
   }
@@ -82,6 +108,7 @@ const App = () => {
   return (
     <div>
       <h2>Phonebook</h2>
+      <Notification message={notification.message} type={notification.type} />
       <Filter value={searchTerm} onChange={handleSearchChange} />
       
       <h3>Add a new</h3>
