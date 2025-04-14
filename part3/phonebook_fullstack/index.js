@@ -1,5 +1,6 @@
 const express = require('express')
 const morgan = require('morgan')
+const cors = require('cors')
 const app = express()
 
 // Custom token for request body
@@ -10,8 +11,9 @@ morgan.token('body', (req) => {
 // Use morgan with custom format
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'))
 
+app.use(cors())
 app.use(express.json())
-app.use(express.static('public')) // Serve static files from 'public' directory
+app.use(express.static('public'))
 
 // Root route
 app.get('/', (request, response) => {
@@ -103,7 +105,7 @@ app.post('/api/persons', (request, response) => {
   response.json(person)
 })
 
-const PORT = 3001
+const PORT = process.env.PORT || 3001
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`)
 }) 
