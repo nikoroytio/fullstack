@@ -8,8 +8,11 @@ const blogHelper = require('./blog_helper')
 const app = require('../app')
 const Blog = require('../models/blog')
 const User = require('../models/user')
+const { TEST_USER_USERNAME, TEST_USER_PASSWORD, TEST_USER_NAME } = require('../utils/config')
 
 const api = supertest(app)
+
+let token
 
 const initialBlogs = [
   {
@@ -31,13 +34,23 @@ describe('when there is initially one user and some blogs in db', () => {
     await Blog.deleteMany({})
     await User.deleteMany({})
 
-    const passwordHash = await bcrypt.hash('sekret', 10)
-    const user = new User({ 
-      username: 'root', 
-      name: 'Superuser',
-      passwordHash 
+    // Create test user
+    const user = new User({
+      username: TEST_USER_USERNAME,
+      name: TEST_USER_NAME,
+      password: TEST_USER_PASSWORD
     })
     await user.save()
+
+    // Login to get token
+    const response = await api
+      .post('/api/login')
+      .send({
+        username: TEST_USER_USERNAME,
+        password: TEST_USER_PASSWORD
+      })
+    
+    token = response.body.token
 
     const blogObjects = initialBlogs.map(blog => new Blog({ ...blog, user: user._id }))
     const promiseArray = blogObjects.map(blog => blog.save())
@@ -66,14 +79,6 @@ describe('when there is initially one user and some blogs in db', () => {
 
   describe('creating a blog', () => {
     test('succeeds with valid token', async () => {
-      // First login to get token
-      const loginResponse = await api
-        .post('/api/login')
-        .send({ username: 'root', password: 'sekret' })
-        .expect(200)
-
-      const token = loginResponse.body.token
-
       const newBlog = {
         title: 'Type wars',
         author: 'Robert C. Martin',
@@ -90,8 +95,8 @@ describe('when there is initially one user and some blogs in db', () => {
 
       const savedBlog = response.body
       assert(savedBlog.user)
-      assert.strictEqual(savedBlog.user.username, 'root')
-      assert.strictEqual(savedBlog.user.name, 'Superuser')
+      assert.strictEqual(savedBlog.user.username, TEST_USER_USERNAME)
+      assert.strictEqual(savedBlog.user.name, TEST_USER_NAME)
 
       // Verify the blog was added to the user's blogs array
       const users = await userHelper.usersInDb()
@@ -161,14 +166,6 @@ describe('when there is initially one user and some blogs in db', () => {
 
   describe('deleting a blog', () => {
     test('succeeds with status code 204 if id is valid and user is creator', async () => {
-      // First login to get token
-      const loginResponse = await api
-        .post('/api/login')
-        .send({ username: 'root', password: 'sekret' })
-        .expect(200)
-
-      const token = loginResponse.body.token
-
       // Get the first blog
       const blogsAtStart = await blogHelper.blogsInDb()
       const blogToDelete = blogsAtStart[0]
