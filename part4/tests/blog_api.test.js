@@ -34,11 +34,12 @@ describe('when there is initially one user and some blogs in db', () => {
     await Blog.deleteMany({})
     await User.deleteMany({})
 
-    // Create test user
+    // Create test user with hashed password
+    const passwordHash = await bcrypt.hash(TEST_USER_PASSWORD, 10)
     const user = new User({
       username: TEST_USER_USERNAME,
       name: TEST_USER_NAME,
-      password: TEST_USER_PASSWORD
+      passwordHash
     })
     await user.save()
 
