@@ -6,14 +6,15 @@ const bcrypt = require('bcrypt')
 const helper = require('./user_helper')
 const app = require('../app')
 const User = require('../models/user')
+const config = require('../utils/config')
 
 const api = supertest(app)
 
 const initialUsers = [
   {
-    username: 'root',
-    name: 'Superuser',
-    password: 'salainen'
+    username: config.TEST_USER_USERNAME,
+    name: config.TEST_USER_NAME,
+    password: config.TEST_USER_PASSWORD
   }
 ]
 
@@ -21,10 +22,10 @@ describe('when there is initially one user in db', () => {
   beforeEach(async () => {
     await User.deleteMany({})
 
-    const passwordHash = await bcrypt.hash('salainen', 10)
+    const passwordHash = await bcrypt.hash(config.TEST_USER_PASSWORD, 10)
     const user = new User({ 
-      username: 'root', 
-      name: 'Superuser',
+      username: config.TEST_USER_USERNAME, 
+      name: config.TEST_USER_NAME,
       passwordHash 
     })
 
@@ -36,7 +37,7 @@ describe('when there is initially one user in db', () => {
 
     const newUser = {
       name: 'Niko Röytiö',
-      password: 'salainen',
+      password: config.TEST_USER_PASSWORD,
     }
 
     const result = await api
@@ -75,7 +76,7 @@ describe('when there is initially one user in db', () => {
     const newUser = {
       username: 'nroytio',
       name: 'Niko Röytiö',
-      password: 'salainen',
+      password: config.TEST_USER_PASSWORD,
     }
 
     await api
@@ -95,9 +96,9 @@ describe('when there is initially one user in db', () => {
     const usersAtStart = await helper.usersInDb()
 
     const newUser = {
-      username: 'root',
-      name: 'Superuser',
-      password: 'salainen',
+      username: config.TEST_USER_USERNAME,
+      name: config.TEST_USER_NAME,
+      password: config.TEST_USER_PASSWORD,
     }
 
     const result = await api
@@ -139,7 +140,7 @@ describe('when there is initially one user in db', () => {
     const newUser = {
       username: 'nr',
       name: 'Niko Röytiö',
-      password: 'salainen',
+      password: config.TEST_USER_PASSWORD,
     }
 
     const result = await api
